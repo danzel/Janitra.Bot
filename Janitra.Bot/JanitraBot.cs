@@ -7,27 +7,32 @@ using System.Threading.Tasks;
 using Janitra.Bot.Api;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace Janitra.Bot
 {
 	class JanitraBot
 	{
 		private readonly IClient _client;
+		private readonly ILogger _logger;
+
 		private readonly int _janitraBotId;
 		private readonly string _authToken;
 
 		public JanitraBot(IConfigurationRoot configuration, ServiceProvider serviceProvider)
 		{
 			_client = serviceProvider.GetService<IClient>();
+			_logger = serviceProvider.GetService<ILogger>();
 
 			_janitraBotId = int.Parse(configuration["JanitraBotId"]);
 			_authToken = configuration["AuthToken"];
 		}
 
-		public void Run()
+		public void RunForever()
 		{
 			Task.Run(() =>
 			{
+				_logger.Information("Starting to Run Forever");
 				while (true)
 				{
 					try
@@ -46,6 +51,8 @@ namespace Janitra.Bot
 
 		public async void RunOnce()
 		{
+			_logger.Information("Checking in");
+
 			//Get what builds and tests should be ran
 			var builds = await _client.CitraBuildsListGetAsync();
 			var testDefinitions = await _client.TestDefinitionsListGetAsync();
@@ -67,6 +74,7 @@ namespace Janitra.Bot
 
 		public async Task RunTest(JsonCitraBuild build, JsonTestDefinition testDefinition)
 		{
+			_logger.Information("Preparing to Run Test {testDefinitionId} for Build {citraBuildId}", testDefinition.TestDefinitionId, build.CitraBuildId);
 			await GetBuildIfRequired(build.CitraBuildId);
 			var executable = GetBuildExecutablePath(build.CitraBuildId);
 
@@ -85,6 +93,7 @@ namespace Janitra.Bot
 
 			var result = NewTestResultTestResultType.Completed;
 
+			_logger.Information("Starting test");
 			var process = Process.Start(startInfo);
 
 			if (!process.WaitForExit(5 * 60 * 1000))
@@ -98,6 +107,8 @@ namespace Janitra.Bot
 				result = NewTestResultTestResultType.Crash;
 			}
 
+			_logger.Information("Test finished, result {result}", result);
+
 			var log = await process.StandardOutput.ReadToEndAsync();
 
 			var error = await process.StandardError.ReadToEndAsync();
@@ -106,6 +117,10 @@ namespace Janitra.Bot
 				log += "\n\nError:\n" + error;
 			}
 
+			_logger.Information("Got {logLength} bytes of logs, {errorLength} bytes are from StandardError", log.Length, error.Length);
+
+
+			_logger.Information("Submitting result");
 			await _client.TestResultsAddPostAsync(new NewTestResult
 			{
 				CitraBuildId = build.CitraBuildId,
@@ -115,6 +130,7 @@ namespace Janitra.Bot
 				TestResultType = result,
 				//TODO: Screenshots
 			});
+			_logger.Information("Done!");
 		}
 
 		private string UrlForOurOs(JsonCitraBuild build)

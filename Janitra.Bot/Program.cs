@@ -2,6 +2,7 @@
 using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Serilog;
 
 namespace Janitra.Bot
 {
@@ -9,16 +10,23 @@ namespace Janitra.Bot
 	{
 		static void Main(string[] args)
 		{
-			var services = new ServiceCollection();
 			// Set up configuration sources.
-			var builder = new ConfigurationBuilder()
+			var configuration = new ConfigurationBuilder()
 				.SetBasePath(Path.Combine(AppContext.BaseDirectory))
-				.AddJsonFile("appsettings.json", false);
+				.AddJsonFile("appsettings.json", false)
+				.Build();
 
-			var configuration = builder.Build();
+			var services = new ServiceCollection();
+
+			var logger = new LoggerConfiguration()
+				.ReadFrom.Configuration(configuration)
+				.CreateLogger();
+			services.AddSingleton<ILogger>(logger);
+
+
 			var serviceProvider = services.BuildServiceProvider();
 
-			new JanitraBot(configuration, serviceProvider).Run();
+			new JanitraBot(configuration, serviceProvider).RunForever();
 		}
 	}
 }
