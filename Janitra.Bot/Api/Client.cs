@@ -1204,6 +1204,11 @@ namespace Janitra.Bot.Api
 	[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "9.4.10.0")]
 	public partial class NewTestResult
 	{
+		/// <summary>JanitraBot Token</summary>
+		[Newtonsoft.Json.JsonProperty("accessKey", Required = Newtonsoft.Json.Required.Always)]
+		[System.ComponentModel.DataAnnotations.Required]
+		public string AccessKey { get; set; }
+
 		[Newtonsoft.Json.JsonProperty("citraBuildId", Required = Newtonsoft.Json.Required.Always)]
 		public int CitraBuildId { get; set; }
 

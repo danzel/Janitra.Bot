@@ -1,31 +1,50 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Janitra.Bot.Api;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
 namespace Janitra.Bot
 {
+	class JanitraBotOptions
+	{
+		public string AccessKey { get; set; }
+		public int JanitraBotId { get; set; }
+
+		public JanitraBotOptions(string accessKey, int janitraBotId)
+		{
+			AccessKey = accessKey;
+			JanitraBotId = janitraBotId;
+		}
+	}
+
 	class JanitraBot
 	{
 		private readonly IClient _client;
 		private readonly ILogger _logger;
 
 		private readonly int _janitraBotId;
-		private readonly string _authToken;
+		private readonly string _accessKey;
 
-		public JanitraBot(IConfigurationRoot configuration, ServiceProvider serviceProvider)
+		private const string BuildsPath = "Builds";
+		private const string MoviesPath = "Movies";
+		private const string TestRomsPath = "TestRoms";
+
+		//TODO: Platform specific
+		private const string CitraExecutable = "citra.exe";
+
+		public JanitraBot(IClient client, ILogger logger, JanitraBotOptions options)
 		{
-			_client = serviceProvider.GetService<IClient>();
-			_logger = serviceProvider.GetService<ILogger>();
+			_janitraBotId = options.JanitraBotId;
+			_accessKey = options.AccessKey;
 
-			_janitraBotId = int.Parse(configuration["JanitraBotId"]);
-			_authToken = configuration["AuthToken"];
+			_client = client;
+			_logger = logger;
 		}
 
 		public void RunForever()
@@ -46,10 +65,10 @@ namespace Janitra.Bot
 					}
 					Task.Delay(TimeSpan.FromMinutes(1));
 				}
-			});
+			}).Wait();
 		}
 
-		public async void RunOnce()
+		public async Task RunOnce()
 		{
 			_logger.Information("Checking in");
 
@@ -57,8 +76,14 @@ namespace Janitra.Bot
 			var builds = await _client.CitraBuildsListGetAsync();
 			var testDefinitions = await _client.TestDefinitionsListGetAsync();
 
+			_logger.Information("Found {buildsCount} active builds, {testsCount} active tests", builds.Count, testDefinitions.Count);
+
 			foreach (var build in builds)
 			{
+				//Can't test on this OS
+				if (UrlForOurOs(build) == null)
+					continue;
+
 				var testResults = await _client.TestResultsListGetAsync(build.CitraBuildId, janitraBotId: _janitraBotId);
 
 				//Check we have a result for every test definition, do those we don't
@@ -66,6 +91,10 @@ namespace Janitra.Bot
 				{
 					if (testResults.All(tr => tr.TestDefinitionId != testDefinition.TestDefinitionId))
 					{
+						await GetBuildIfRequired(build);
+						await GetTestDefinitionIfRequired(testDefinition);
+
+
 						await RunTest(build, testDefinition);
 					}
 				}
@@ -75,8 +104,7 @@ namespace Janitra.Bot
 		public async Task RunTest(JsonCitraBuild build, JsonTestDefinition testDefinition)
 		{
 			_logger.Information("Preparing to Run Test {testDefinitionId} for Build {citraBuildId}", testDefinition.TestDefinitionId, build.CitraBuildId);
-			await GetBuildIfRequired(build.CitraBuildId);
-			var executable = GetBuildExecutablePath(build.CitraBuildId);
+			var executable = GetBuildExecutablePath(build);
 
 			var startInfo = new ProcessStartInfo
 			{
@@ -123,14 +151,101 @@ namespace Janitra.Bot
 			_logger.Information("Submitting result");
 			await _client.TestResultsAddPostAsync(new NewTestResult
 			{
+				JanitraBotId = _janitraBotId,
+				AccessKey = _accessKey,
+
 				CitraBuildId = build.CitraBuildId,
 				TestDefinitionId = testDefinition.TestDefinitionId,
-				JanitraBotId = _janitraBotId,
 				Log = Encoding.UTF8.GetBytes(log),
 				TestResultType = result,
 				//TODO: Screenshots
 			});
 			_logger.Information("Done!");
+		}
+
+		/// <summary>
+		/// Throws an exception if we fail to fetch the build
+		/// </summary>
+		private async Task GetBuildIfRequired(JsonCitraBuild build)
+		{
+			if (!Directory.Exists(BuildsPath))
+				Directory.CreateDirectory(BuildsPath);
+
+			var buildPath = Path.Combine(BuildsPath, build.CitraBuildId.ToString());
+			if (!Directory.Exists(buildPath) || !Directory.EnumerateFiles(buildPath, CitraExecutable, SearchOption.AllDirectories).Any())
+			{
+				_logger.Information("Need to download build {buildId}", build.CitraBuildId);
+				var client = new HttpClient();
+				var result = await client.GetAsync(UrlForOurOs(build));
+
+				if (result.IsSuccessStatusCode)
+				{
+					_logger.Information("Download Completed, Extracting");
+					var tmpFileName = Path.GetTempFileName();
+					using (var file = File.OpenWrite(tmpFileName))
+						await result.Content.CopyToAsync(file);
+
+					//TODO: Unzip or use others, this is windows zip only
+					ZipFile.ExtractToDirectory(tmpFileName, buildPath, true);
+				}
+				else
+				{
+					_logger.Error("Download Failed {statusCode} {reason}", result.StatusCode, result.ReasonPhrase);
+					throw new Exception("Failed to download build " + build.CitraBuildId);
+				}
+			}
+		}
+
+		private async Task GetTestDefinitionIfRequired(JsonTestDefinition testDefinition)
+		{
+			//TODO: Test the movie Sha256 matches
+			var movieFilename = Path.Combine(MoviesPath, testDefinition.MovieSha256);
+			if (!File.Exists(movieFilename))
+			{
+				_logger.Information("Need to download movie for test {testDefinitionId}", testDefinition.TestDefinitionId);
+				var client = new HttpClient();
+				var result = await client.GetAsync(testDefinition.MovieUrl);
+
+				if (result.IsSuccessStatusCode)
+				{
+					_logger.Information("Download Completed, Saving");
+					using (var file = File.OpenWrite(movieFilename))
+						await result.Content.CopyToAsync(file);
+				}
+				else
+				{
+					_logger.Error("Download Failed {statusCode} {reason}", result.StatusCode, result.ReasonPhrase);
+					throw new Exception("Failed to download testDefinition.Movie " + testDefinition.TestDefinitionId);
+				}
+			}
+
+			//TODO: Support other types of test rom
+			//TODO: Sha256 check
+			var testRomFilename = Path.Combine(TestRomsPath, testDefinition.TestRom.RomSha256);
+			if (!File.Exists(testRomFilename))
+			{
+				_logger.Information("Need to download test ROM for test {testDefinitionId}", testDefinition.TestDefinitionId);
+				var client = new HttpClient();
+				var result = await client.GetAsync(testDefinition.TestRom.RomUrl);
+
+				if (result.IsSuccessStatusCode)
+				{
+					_logger.Information("Download Completed, Saving");
+					using (var file = File.OpenWrite(testRomFilename))
+						await result.Content.CopyToAsync(file);
+				}
+				else
+				{
+					_logger.Error("Download Failed {statusCode} {reason}", result.StatusCode, result.ReasonPhrase);
+					throw new Exception("Failed to download testDefinition.TestRom " + testDefinition.TestDefinitionId);
+				}
+			}
+		}
+
+		private string GetBuildExecutablePath(JsonCitraBuild build)
+		{
+			var buildPath = Path.Combine(BuildsPath, build.CitraBuildId.ToString());
+			return Directory.EnumerateFiles(buildPath, CitraExecutable, SearchOption.AllDirectories).SingleOrDefault();
 		}
 
 		private string UrlForOurOs(JsonCitraBuild build)
@@ -147,4 +262,5 @@ namespace Janitra.Bot
 					throw new Exception("Don't know what platform matches " + Environment.OSVersion.Platform);
 			}
 		}
+	}
 }

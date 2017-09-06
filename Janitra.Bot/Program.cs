@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
+using Janitra.Bot.Api;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
 namespace Janitra.Bot
@@ -16,17 +16,15 @@ namespace Janitra.Bot
 				.AddJsonFile("appsettings.json", false)
 				.Build();
 
-			var services = new ServiceCollection();
-
 			var logger = new LoggerConfiguration()
 				.ReadFrom.Configuration(configuration)
 				.CreateLogger();
-			services.AddSingleton<ILogger>(logger);
 
+			var section = configuration.GetSection("JanitraBot");
+			var options = new JanitraBotOptions(section["AccessKey"], int.Parse(section["JanitraBotId"]));
 
-			var serviceProvider = services.BuildServiceProvider();
-
-			new JanitraBot(configuration, serviceProvider).RunForever();
+			//new JanitraBot(new Client(section["BaseUrl"]), logger, options).RunForever();
+			new JanitraBot(new Client(section["BaseUrl"]), logger, options).RunOnce().Wait();
 		}
 	}
 }
