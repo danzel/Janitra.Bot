@@ -1190,6 +1190,9 @@ namespace Janitra.Bot.Api
 		[Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
 		public JsonTestResultTestResultType TestResultType { get; set; }
 
+		[Newtonsoft.Json.JsonProperty("timeTakenSeconds", Required = Newtonsoft.Json.Required.Always)]
+		public double TimeTakenSeconds { get; set; }
+
 		public string ToJson()
 		{
 			return Newtonsoft.Json.JsonConvert.SerializeObject(this);
@@ -1234,6 +1237,9 @@ namespace Janitra.Bot.Api
 		[System.ComponentModel.DataAnnotations.Required]
 		[Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
 		public NewTestResultTestResultType TestResultType { get; set; }
+
+		[Newtonsoft.Json.JsonProperty("timeTakenSeconds", Required = Newtonsoft.Json.Required.Always)]
+		public double TimeTakenSeconds { get; set; }
 
 		public string ToJson()
 		{

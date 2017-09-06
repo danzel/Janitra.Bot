@@ -70,6 +70,12 @@ namespace Janitra.Bot
 
 		public async Task RunOnce()
 		{
+			foreach (var dir in new [] { BuildsPath, MoviesPath, TestRomsPath})
+			{
+				if (!Directory.Exists(dir))
+					Directory.CreateDirectory(dir);
+			}
+
 			_logger.Information("Checking in");
 
 			//Get what builds and tests should be ran
@@ -78,6 +84,7 @@ namespace Janitra.Bot
 
 			_logger.Information("Found {buildsCount} active builds, {testsCount} active tests", builds.Count, testDefinitions.Count);
 
+			//TODO: Eventually tidy up old not used any more builds
 			foreach (var build in builds)
 			{
 				//Can't test on this OS
@@ -106,10 +113,14 @@ namespace Janitra.Bot
 			_logger.Information("Preparing to Run Test {testDefinitionId} for Build {citraBuildId}", testDefinition.TestDefinitionId, build.CitraBuildId);
 			var executable = GetBuildExecutablePath(build);
 
+			var movieFilename = Path.Combine(MoviesPath, testDefinition.MovieSha256);
+			var testRomFilename = Path.Combine(TestRomsPath, testDefinition.TestRom.RomSha256);
+
+
 			var startInfo = new ProcessStartInfo
 			{
 				FileName = executable,
-				Arguments = "--help TODO", //TODO
+				Arguments = $"--movie-play {movieFilename} --movie-test {testRomFilename}",
 
 				CreateNoWindow = true,
 				RedirectStandardOutput = true,
@@ -122,6 +133,7 @@ namespace Janitra.Bot
 			var result = NewTestResultTestResultType.Completed;
 
 			_logger.Information("Starting test");
+			var stopwatch = Stopwatch.StartNew();
 			var process = Process.Start(startInfo);
 
 			if (!process.WaitForExit(5 * 60 * 1000))
@@ -129,6 +141,7 @@ namespace Janitra.Bot
 				process.Kill();
 				result = NewTestResultTestResultType.Timeout;
 			}
+			stopwatch.Stop();
 
 			if (process.ExitCode != 0)
 			{
@@ -158,6 +171,7 @@ namespace Janitra.Bot
 				TestDefinitionId = testDefinition.TestDefinitionId,
 				Log = Encoding.UTF8.GetBytes(log),
 				TestResultType = result,
+				TimeTakenSeconds = stopwatch.Elapsed.TotalSeconds
 				//TODO: Screenshots
 			});
 			_logger.Information("Done!");
