@@ -6,6 +6,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using ImageSharp;
+using ImageSharp.Formats;
+using ImageSharp.Processing;
 using Janitra.Bot.Api;
 using Serilog;
 
@@ -160,6 +163,8 @@ namespace Janitra.Bot
 
 			_logger.Information("Got {logLength} bytes of logs, {errorLength} bytes are from StandardError", log.Length, error.Length);
 
+			var screenshotTop = GetRotatedPngScreenshot("screenshot_0.bmp");
+			var screenshotBottom = GetRotatedPngScreenshot("screenshot_1.bmp");
 
 			_logger.Information("Submitting result");
 			await _client.TestResultsAddPostAsync(new NewTestResult
@@ -171,10 +176,31 @@ namespace Janitra.Bot
 				TestDefinitionId = testDefinition.TestDefinitionId,
 				Log = Encoding.UTF8.GetBytes(log),
 				TestResultType = result,
-				TimeTakenSeconds = stopwatch.Elapsed.TotalSeconds
-				//TODO: Screenshots
+				TimeTakenSeconds = stopwatch.Elapsed.TotalSeconds,
+
+				ScreenshotTop = screenshotTop,
+				ScreenshotBottom = screenshotBottom
 			});
 			_logger.Information("Done!");
+		}
+
+		/// <summary>
+		/// Loads the given screenshot, rotates it the right way up and returns it as a PNG
+		/// </summary>
+		private byte[] GetRotatedPngScreenshot(string path)
+		{
+			using (var stream = File.OpenRead(path))
+			{
+				using (var image = ImageSharp.Image.Load(stream))
+				{
+					using (var output = new MemoryStream())
+					{
+						image.Rotate(RotateType.Rotate270)
+							.Save(output, new PngEncoder { PngColorType = PngColorType.Rgb, CompressionLevel = 9 });
+						return output.ToArray();
+					}
+				}
+			}
 		}
 
 		/// <summary>
