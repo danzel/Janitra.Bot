@@ -82,8 +82,8 @@ namespace Janitra.Bot
 			_logger.Information("Checking in");
 
 			//Get what builds and tests should be ran
-			var builds = await _client.CitraBuildsListGetAsync();
-			var testDefinitions = await _client.TestDefinitionsListGetAsync();
+			var builds = await _client.ApiCitraBuildsListGetAsync();
+			var testDefinitions = await _client.ApiTestDefinitionsListGetAsync();
 
 			_logger.Information("Found {buildsCount} active builds, {testsCount} active tests", builds.Count, testDefinitions.Count);
 
@@ -94,7 +94,7 @@ namespace Janitra.Bot
 				if (UrlForOurOs(build) == null)
 					continue;
 
-				var testResults = await _client.TestResultsListGetAsync(build.CitraBuildId, janitraBotId: _janitraBotId);
+				var testResults = await _client.ApiTestResultsListGetAsync(build.CitraBuildId, janitraBotId: _janitraBotId);
 
 				//Check we have a result for every test definition, do those we don't
 				foreach (var testDefinition in testDefinitions)
@@ -114,6 +114,11 @@ namespace Janitra.Bot
 		public async Task RunTest(JsonCitraBuild build, JsonTestDefinition testDefinition)
 		{
 			_logger.Information("Preparing to Run Test {testDefinitionId} for Build {citraBuildId}", testDefinition.TestDefinitionId, build.CitraBuildId);
+			if (File.Exists("screenshot_0.bmp"))
+				File.Delete("screenshot_0.bmp");
+			if (File.Exists("screenshot_1.bmp"))
+				File.Delete("screenshot_1.bmp");
+
 			var executable = GetBuildExecutablePath(build);
 
 			var movieFilename = Path.Combine(MoviesPath, testDefinition.MovieSha256);
@@ -133,7 +138,7 @@ namespace Janitra.Bot
 				//TODO? WorkingDirectory = 
 			};
 
-			var result = NewTestResultTestResultType.Completed;
+			var result = NewTestResultExecutionResult.Completed;
 
 			_logger.Information("Starting test");
 			var stopwatch = Stopwatch.StartNew();
@@ -142,13 +147,13 @@ namespace Janitra.Bot
 			if (!process.WaitForExit(5 * 60 * 1000))
 			{
 				process.Kill();
-				result = NewTestResultTestResultType.Timeout;
+				result = NewTestResultExecutionResult.Timeout;
 			}
 			stopwatch.Stop();
 
 			if (process.ExitCode != 0)
 			{
-				result = NewTestResultTestResultType.Crash;
+				result = NewTestResultExecutionResult.Crash;
 			}
 
 			_logger.Information("Test finished, result {result}", result);
@@ -167,7 +172,7 @@ namespace Janitra.Bot
 			var screenshotBottom = GetRotatedPngScreenshot("screenshot_1.bmp");
 
 			_logger.Information("Submitting result");
-			await _client.TestResultsAddPostAsync(new NewTestResult
+			await _client.ApiTestResultsAddPostAsync(new NewTestResult
 			{
 				JanitraBotId = _janitraBotId,
 				AccessKey = _accessKey,
@@ -175,7 +180,7 @@ namespace Janitra.Bot
 				CitraBuildId = build.CitraBuildId,
 				TestDefinitionId = testDefinition.TestDefinitionId,
 				Log = Encoding.UTF8.GetBytes(log),
-				TestResultType = result,
+				ExecutionResult = result,
 				TimeTakenSeconds = stopwatch.Elapsed.TotalSeconds,
 
 				ScreenshotTop = screenshotTop,

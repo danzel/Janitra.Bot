@@ -15,51 +15,36 @@ namespace Janitra.Bot.Api
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonCitraBuild>> CitraBuildsListGetAsync(bool? includeInactive = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+		System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonCitraBuild>> ApiCitraBuildsListGetAsync(bool? includeInactive = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+
+		/// <summary>Gets the given Citra Build</summary>
+		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+		/// <returns>Success</returns>
+		/// <exception cref="SwaggerException">A server side error occurred.</exception>
+		System.Threading.Tasks.Task<JsonCitraBuild> ApiCitraBuildsByCitraBuildIdGetAsync(int citraBuildId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 		/// <summary>Add a Citra Build</summary>
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		System.Threading.Tasks.Task CitraBuildsAddPostAsync(NewCitraBuild newBuild = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+		System.Threading.Tasks.Task ApiCitraBuildsAddPostAsync(NewCitraBuild newBuild = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 		/// <summary>Get the list of all Janitra Bots in the system</summary>
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonJanitraBot>> JanitraBotsListGetAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+		System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonJanitraBot>> ApiJanitraBotsListGetAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 		/// <summary>Add a new Janitra Bot</summary>
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		System.Threading.Tasks.Task<AddBotResult> JanitraBotsAddPostAsync(NewJanitraBot botDetails = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-		/// <summary>Begin an OAuth authentication with github</summary>
-		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		System.Threading.Tasks.Task OauthGithubGetAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-		/// <summary>Finish an OAuth authentication with github. Redirects you to a URL including your JWT (for authentication)</summary>
-		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		System.Threading.Tasks.Task OauthGithubCallbackGetAsync(string code = null, string state = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-		/// <summary>Returns the authenticated users details if authenticated</summary>
-		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-		/// <returns>Success</returns>
-		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		System.Threading.Tasks.Task<VerifyAuthResult> OauthVerifyAuthGetAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+		System.Threading.Tasks.Task<AddBotResult> ApiJanitraBotsAddPostAsync(NewJanitraBot botDetails = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonTestDefinition>> TestDefinitionsListGetAsync(bool? includeInactive = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
-
-		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-		/// <returns>Success</returns>
-		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		System.Threading.Tasks.Task<AddTestResult> TestDefinitionsAddPostAsync(string testName = null, byte[] movieBytes = null, string notes = null, int? testRomId = null, RomType? newTestRom_RomType = null, string newTestRom_Name = null, string newTestRom_FileName = null, byte[] newTestRom_RomBytes = null, string newTestRom_CodeUrl = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+		System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonTestDefinition>> ApiTestDefinitionsListGetAsync(bool? includeInactive = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 		/// <summary>Get all of the test results for the given Build, TestDefinition, JanitraBot. Ordered by TestDefinitionId, JanitraBotId</summary>
 		/// <param name="citraBuildId">What CitraBuild to fetch TestResults for</param>
@@ -68,13 +53,13 @@ namespace Janitra.Bot.Api
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonTestResult>> TestResultsListGetAsync(int? citraBuildId = null, int? testDefinitionId = null, int? janitraBotId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+		System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonTestResult>> ApiTestResultsListGetAsync(int? citraBuildId = null, int? testDefinitionId = null, int? janitraBotId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 		/// <summary>Submit a test result</summary>
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		System.Threading.Tasks.Task TestResultsAddPostAsync(NewTestResult testResult = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
+		System.Threading.Tasks.Task ApiTestResultsAddPostAsync(NewTestResult testResult = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken));
 
 	}
 
@@ -110,10 +95,10 @@ namespace Janitra.Bot.Api
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		public async System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonCitraBuild>> CitraBuildsListGetAsync(bool? includeInactive = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+		public async System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonCitraBuild>> ApiCitraBuildsListGetAsync(bool? includeInactive = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
 		{
 			var urlBuilder_ = new System.Text.StringBuilder();
-			urlBuilder_.Append(BaseUrl).Append("/citra-builds/list?");
+			urlBuilder_.Append(BaseUrl).Append("/api/citra-builds/list?");
 			if (includeInactive != null) urlBuilder_.Append("includeInactive=").Append(System.Uri.EscapeDataString(System.Convert.ToString(includeInactive.Value, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
 			urlBuilder_.Length--;
 
@@ -177,14 +162,87 @@ namespace Janitra.Bot.Api
 			}
 		}
 
+		/// <summary>Gets the given Citra Build</summary>
+		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+		/// <returns>Success</returns>
+		/// <exception cref="SwaggerException">A server side error occurred.</exception>
+		public async System.Threading.Tasks.Task<JsonCitraBuild> ApiCitraBuildsByCitraBuildIdGetAsync(int citraBuildId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+		{
+			if (citraBuildId == null)
+				throw new System.ArgumentNullException("citraBuildId");
+
+			var urlBuilder_ = new System.Text.StringBuilder();
+			urlBuilder_.Append(BaseUrl).Append("/api/citra-builds/{citraBuildId}");
+			urlBuilder_.Replace("{citraBuildId}", System.Uri.EscapeDataString(System.Convert.ToString(citraBuildId, System.Globalization.CultureInfo.InvariantCulture)));
+
+			var client_ = new System.Net.Http.HttpClient();
+			try
+			{
+				using (var request_ = new System.Net.Http.HttpRequestMessage())
+				{
+					request_.Method = new System.Net.Http.HttpMethod("GET");
+					request_.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
+					PrepareRequest(client_, request_, urlBuilder_);
+					var url_ = urlBuilder_.ToString();
+					request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
+					PrepareRequest(client_, request_, url_);
+
+					var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+					try
+					{
+						var headers_ = System.Linq.Enumerable.ToDictionary(response_.Headers, h_ => h_.Key, h_ => h_.Value);
+						foreach (var item_ in response_.Content.Headers)
+							headers_[item_.Key] = item_.Value;
+
+						ProcessResponse(client_, response_);
+
+						var status_ = ((int)response_.StatusCode).ToString();
+						if (status_ == "200")
+						{
+							var responseData_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+							var result_ = default(JsonCitraBuild);
+							try
+							{
+								result_ = Newtonsoft.Json.JsonConvert.DeserializeObject<JsonCitraBuild>(responseData_, _settings.Value);
+								return result_;
+							}
+							catch (System.Exception exception)
+							{
+								throw new SwaggerException("Could not deserialize the response body.", status_, responseData_, headers_, exception);
+							}
+						}
+						else
+						if (status_ != "200" && status_ != "204")
+						{
+							var responseData_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
+							throw new SwaggerException("The HTTP status code of the response was not expected (" + (int)response_.StatusCode + ").", status_, responseData_, headers_, null);
+						}
+
+						return default(JsonCitraBuild);
+					}
+					finally
+					{
+						if (response_ != null)
+							response_.Dispose();
+					}
+				}
+			}
+			finally
+			{
+				if (client_ != null)
+					client_.Dispose();
+			}
+		}
+
 		/// <summary>Add a Citra Build</summary>
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		public async System.Threading.Tasks.Task CitraBuildsAddPostAsync(NewCitraBuild newBuild = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+		public async System.Threading.Tasks.Task ApiCitraBuildsAddPostAsync(NewCitraBuild newBuild = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
 		{
 			var urlBuilder_ = new System.Text.StringBuilder();
-			urlBuilder_.Append(BaseUrl).Append("/citra-builds/add");
+			urlBuilder_.Append(BaseUrl).Append("/api/citra-builds/add");
 
 			var client_ = new System.Net.Http.HttpClient();
 			try
@@ -240,10 +298,10 @@ namespace Janitra.Bot.Api
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		public async System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonJanitraBot>> JanitraBotsListGetAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+		public async System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonJanitraBot>> ApiJanitraBotsListGetAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
 		{
 			var urlBuilder_ = new System.Text.StringBuilder();
-			urlBuilder_.Append(BaseUrl).Append("/janitra-bots/list");
+			urlBuilder_.Append(BaseUrl).Append("/api/janitra-bots/list");
 
 			var client_ = new System.Net.Http.HttpClient();
 			try
@@ -309,10 +367,10 @@ namespace Janitra.Bot.Api
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		public async System.Threading.Tasks.Task<AddBotResult> JanitraBotsAddPostAsync(NewJanitraBot botDetails = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+		public async System.Threading.Tasks.Task<AddBotResult> ApiJanitraBotsAddPostAsync(NewJanitraBot botDetails = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
 		{
 			var urlBuilder_ = new System.Text.StringBuilder();
-			urlBuilder_.Append(BaseUrl).Append("/janitra-bots/add");
+			urlBuilder_.Append(BaseUrl).Append("/api/janitra-bots/add");
 
 			var client_ = new System.Net.Http.HttpClient();
 			try
@@ -377,209 +435,13 @@ namespace Janitra.Bot.Api
 			}
 		}
 
-		/// <summary>Begin an OAuth authentication with github</summary>
-		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		public async System.Threading.Tasks.Task OauthGithubGetAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-		{
-			var urlBuilder_ = new System.Text.StringBuilder();
-			urlBuilder_.Append(BaseUrl).Append("/oauth/github");
-
-			var client_ = new System.Net.Http.HttpClient();
-			try
-			{
-				using (var request_ = new System.Net.Http.HttpRequestMessage())
-				{
-					request_.Method = new System.Net.Http.HttpMethod("GET");
-
-					PrepareRequest(client_, request_, urlBuilder_);
-					var url_ = urlBuilder_.ToString();
-					request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-					PrepareRequest(client_, request_, url_);
-
-					var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-					try
-					{
-						var headers_ = System.Linq.Enumerable.ToDictionary(response_.Headers, h_ => h_.Key, h_ => h_.Value);
-						foreach (var item_ in response_.Content.Headers)
-							headers_[item_.Key] = item_.Value;
-
-						ProcessResponse(client_, response_);
-
-						var status_ = ((int)response_.StatusCode).ToString();
-						if (status_ == "302")
-						{
-							var responseData_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-							throw new SwaggerException("Redirect", status_, responseData_, headers_, null);
-						}
-						else
-						if (status_ != "200" && status_ != "204")
-						{
-							var responseData_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-							throw new SwaggerException("The HTTP status code of the response was not expected (" + (int)response_.StatusCode + ").", status_, responseData_, headers_, null);
-						}
-					}
-					finally
-					{
-						if (response_ != null)
-							response_.Dispose();
-					}
-				}
-			}
-			finally
-			{
-				if (client_ != null)
-					client_.Dispose();
-			}
-		}
-
-		/// <summary>Finish an OAuth authentication with github. Redirects you to a URL including your JWT (for authentication)</summary>
-		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		public async System.Threading.Tasks.Task OauthGithubCallbackGetAsync(string code = null, string state = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-		{
-			var urlBuilder_ = new System.Text.StringBuilder();
-			urlBuilder_.Append(BaseUrl).Append("/oauth/github/callback?");
-			if (code != null) urlBuilder_.Append("code=").Append(System.Uri.EscapeDataString(System.Convert.ToString(code, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
-			if (state != null) urlBuilder_.Append("state=").Append(System.Uri.EscapeDataString(System.Convert.ToString(state, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
-			urlBuilder_.Length--;
-
-			var client_ = new System.Net.Http.HttpClient();
-			try
-			{
-				using (var request_ = new System.Net.Http.HttpRequestMessage())
-				{
-					request_.Method = new System.Net.Http.HttpMethod("GET");
-
-					PrepareRequest(client_, request_, urlBuilder_);
-					var url_ = urlBuilder_.ToString();
-					request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-					PrepareRequest(client_, request_, url_);
-
-					var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-					try
-					{
-						var headers_ = System.Linq.Enumerable.ToDictionary(response_.Headers, h_ => h_.Key, h_ => h_.Value);
-						foreach (var item_ in response_.Content.Headers)
-							headers_[item_.Key] = item_.Value;
-
-						ProcessResponse(client_, response_);
-
-						var status_ = ((int)response_.StatusCode).ToString();
-						if (status_ == "302")
-						{
-							var responseData_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-							throw new SwaggerException("Redirect", status_, responseData_, headers_, null);
-						}
-						else
-						if (status_ == "403")
-						{
-							var responseData_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-							throw new SwaggerException("Forbidden", status_, responseData_, headers_, null);
-						}
-						else
-						if (status_ != "200" && status_ != "204")
-						{
-							var responseData_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-							throw new SwaggerException("The HTTP status code of the response was not expected (" + (int)response_.StatusCode + ").", status_, responseData_, headers_, null);
-						}
-					}
-					finally
-					{
-						if (response_ != null)
-							response_.Dispose();
-					}
-				}
-			}
-			finally
-			{
-				if (client_ != null)
-					client_.Dispose();
-			}
-		}
-
-		/// <summary>Returns the authenticated users details if authenticated</summary>
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		public async System.Threading.Tasks.Task<VerifyAuthResult> OauthVerifyAuthGetAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+		public async System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonTestDefinition>> ApiTestDefinitionsListGetAsync(bool? includeInactive = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
 		{
 			var urlBuilder_ = new System.Text.StringBuilder();
-			urlBuilder_.Append(BaseUrl).Append("/oauth/verify-auth");
-
-			var client_ = new System.Net.Http.HttpClient();
-			try
-			{
-				using (var request_ = new System.Net.Http.HttpRequestMessage())
-				{
-					request_.Method = new System.Net.Http.HttpMethod("GET");
-					request_.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-
-					PrepareRequest(client_, request_, urlBuilder_);
-					var url_ = urlBuilder_.ToString();
-					request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-					PrepareRequest(client_, request_, url_);
-
-					var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-					try
-					{
-						var headers_ = System.Linq.Enumerable.ToDictionary(response_.Headers, h_ => h_.Key, h_ => h_.Value);
-						foreach (var item_ in response_.Content.Headers)
-							headers_[item_.Key] = item_.Value;
-
-						ProcessResponse(client_, response_);
-
-						var status_ = ((int)response_.StatusCode).ToString();
-						if (status_ == "200")
-						{
-							var responseData_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-							var result_ = default(VerifyAuthResult);
-							try
-							{
-								result_ = Newtonsoft.Json.JsonConvert.DeserializeObject<VerifyAuthResult>(responseData_, _settings.Value);
-								return result_;
-							}
-							catch (System.Exception exception)
-							{
-								throw new SwaggerException("Could not deserialize the response body.", status_, responseData_, headers_, exception);
-							}
-						}
-						else
-						if (status_ == "401")
-						{
-							var responseData_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-							throw new SwaggerException("Unauthorized", status_, responseData_, headers_, null);
-						}
-						else
-						if (status_ != "200" && status_ != "204")
-						{
-							var responseData_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-							throw new SwaggerException("The HTTP status code of the response was not expected (" + (int)response_.StatusCode + ").", status_, responseData_, headers_, null);
-						}
-
-						return default(VerifyAuthResult);
-					}
-					finally
-					{
-						if (response_ != null)
-							response_.Dispose();
-					}
-				}
-			}
-			finally
-			{
-				if (client_ != null)
-					client_.Dispose();
-			}
-		}
-
-		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-		/// <returns>Success</returns>
-		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		public async System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonTestDefinition>> TestDefinitionsListGetAsync(bool? includeInactive = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-		{
-			var urlBuilder_ = new System.Text.StringBuilder();
-			urlBuilder_.Append(BaseUrl).Append("/test-definitions/list?");
+			urlBuilder_.Append(BaseUrl).Append("/api/test-definitions/list?");
 			if (includeInactive != null) urlBuilder_.Append("includeInactive=").Append(System.Uri.EscapeDataString(System.Convert.ToString(includeInactive.Value, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
 			urlBuilder_.Length--;
 
@@ -643,86 +505,6 @@ namespace Janitra.Bot.Api
 			}
 		}
 
-		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-		/// <returns>Success</returns>
-		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		public async System.Threading.Tasks.Task<AddTestResult> TestDefinitionsAddPostAsync(string testName = null, byte[] movieBytes = null, string notes = null, int? testRomId = null, RomType? newTestRom_RomType = null, string newTestRom_Name = null, string newTestRom_FileName = null, byte[] newTestRom_RomBytes = null, string newTestRom_CodeUrl = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
-		{
-			var urlBuilder_ = new System.Text.StringBuilder();
-			urlBuilder_.Append(BaseUrl).Append("/test-definitions/add?");
-			if (testName != null) urlBuilder_.Append("TestName=").Append(System.Uri.EscapeDataString(System.Convert.ToString(testName, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
-			if (movieBytes != null) urlBuilder_.Append("MovieBytes=").Append(System.Uri.EscapeDataString(System.Convert.ToString(movieBytes, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
-			if (notes != null) urlBuilder_.Append("Notes=").Append(System.Uri.EscapeDataString(System.Convert.ToString(notes, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
-			if (testRomId != null) urlBuilder_.Append("TestRomId=").Append(System.Uri.EscapeDataString(System.Convert.ToString(testRomId.Value, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
-			if (newTestRom_RomType != null) urlBuilder_.Append("NewTestRom.RomType=").Append(System.Uri.EscapeDataString(System.Convert.ToString(newTestRom_RomType.Value, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
-			if (newTestRom_Name != null) urlBuilder_.Append("NewTestRom.Name=").Append(System.Uri.EscapeDataString(System.Convert.ToString(newTestRom_Name, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
-			if (newTestRom_FileName != null) urlBuilder_.Append("NewTestRom.FileName=").Append(System.Uri.EscapeDataString(System.Convert.ToString(newTestRom_FileName, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
-			if (newTestRom_RomBytes != null) urlBuilder_.Append("NewTestRom.RomBytes=").Append(System.Uri.EscapeDataString(System.Convert.ToString(newTestRom_RomBytes, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
-			if (newTestRom_CodeUrl != null) urlBuilder_.Append("NewTestRom.CodeUrl=").Append(System.Uri.EscapeDataString(System.Convert.ToString(newTestRom_CodeUrl, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
-			urlBuilder_.Length--;
-
-			var client_ = new System.Net.Http.HttpClient();
-			try
-			{
-				using (var request_ = new System.Net.Http.HttpRequestMessage())
-				{
-					var content_ = new System.Net.Http.StringContent(string.Empty);
-					request_.Content = content_;
-					request_.Method = new System.Net.Http.HttpMethod("POST");
-					request_.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-
-					PrepareRequest(client_, request_, urlBuilder_);
-					var url_ = urlBuilder_.ToString();
-					request_.RequestUri = new System.Uri(url_, System.UriKind.RelativeOrAbsolute);
-					PrepareRequest(client_, request_, url_);
-
-					var response_ = await client_.SendAsync(request_, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-					try
-					{
-						var headers_ = System.Linq.Enumerable.ToDictionary(response_.Headers, h_ => h_.Key, h_ => h_.Value);
-						foreach (var item_ in response_.Content.Headers)
-							headers_[item_.Key] = item_.Value;
-
-						ProcessResponse(client_, response_);
-
-						var status_ = ((int)response_.StatusCode).ToString();
-						if (status_ == "200")
-						{
-							var responseData_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-							var result_ = default(AddTestResult);
-							try
-							{
-								result_ = Newtonsoft.Json.JsonConvert.DeserializeObject<AddTestResult>(responseData_, _settings.Value);
-								return result_;
-							}
-							catch (System.Exception exception)
-							{
-								throw new SwaggerException("Could not deserialize the response body.", status_, responseData_, headers_, exception);
-							}
-						}
-						else
-						if (status_ != "200" && status_ != "204")
-						{
-							var responseData_ = await response_.Content.ReadAsStringAsync().ConfigureAwait(false);
-							throw new SwaggerException("The HTTP status code of the response was not expected (" + (int)response_.StatusCode + ").", status_, responseData_, headers_, null);
-						}
-
-						return default(AddTestResult);
-					}
-					finally
-					{
-						if (response_ != null)
-							response_.Dispose();
-					}
-				}
-			}
-			finally
-			{
-				if (client_ != null)
-					client_.Dispose();
-			}
-		}
-
 		/// <summary>Get all of the test results for the given Build, TestDefinition, JanitraBot. Ordered by TestDefinitionId, JanitraBotId</summary>
 		/// <param name="citraBuildId">What CitraBuild to fetch TestResults for</param>
 		/// <param name="testDefinitionId">What TestDefinintion to fetch TestResults for</param>
@@ -730,10 +512,10 @@ namespace Janitra.Bot.Api
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		public async System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonTestResult>> TestResultsListGetAsync(int? citraBuildId = null, int? testDefinitionId = null, int? janitraBotId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+		public async System.Threading.Tasks.Task<System.Collections.ObjectModel.ObservableCollection<JsonTestResult>> ApiTestResultsListGetAsync(int? citraBuildId = null, int? testDefinitionId = null, int? janitraBotId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
 		{
 			var urlBuilder_ = new System.Text.StringBuilder();
-			urlBuilder_.Append(BaseUrl).Append("/test-results/list?");
+			urlBuilder_.Append(BaseUrl).Append("/api/test-results/list?");
 			if (citraBuildId != null) urlBuilder_.Append("citraBuildId=").Append(System.Uri.EscapeDataString(System.Convert.ToString(citraBuildId.Value, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
 			if (testDefinitionId != null) urlBuilder_.Append("testDefinitionId=").Append(System.Uri.EscapeDataString(System.Convert.ToString(testDefinitionId.Value, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
 			if (janitraBotId != null) urlBuilder_.Append("janitraBotId=").Append(System.Uri.EscapeDataString(System.Convert.ToString(janitraBotId.Value, System.Globalization.CultureInfo.InvariantCulture))).Append("&");
@@ -803,10 +585,10 @@ namespace Janitra.Bot.Api
 		/// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
 		/// <returns>Success</returns>
 		/// <exception cref="SwaggerException">A server side error occurred.</exception>
-		public async System.Threading.Tasks.Task TestResultsAddPostAsync(NewTestResult testResult = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
+		public async System.Threading.Tasks.Task ApiTestResultsAddPostAsync(NewTestResult testResult = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken))
 		{
 			var urlBuilder_ = new System.Text.StringBuilder();
-			urlBuilder_.Append(BaseUrl).Append("/test-results/add");
+			urlBuilder_.Append(BaseUrl).Append("/api/test-results/add");
 
 			var client_ = new System.Net.Http.HttpClient();
 			try
@@ -872,6 +654,10 @@ namespace Janitra.Bot.Api
 		[System.ComponentModel.DataAnnotations.Required]
 		public string GitHash { get; set; }
 
+		[Newtonsoft.Json.JsonProperty("commitTime", Required = Newtonsoft.Json.Required.Always)]
+		[System.ComponentModel.DataAnnotations.Required]
+		public System.DateTimeOffset CommitTime { get; set; }
+
 		[Newtonsoft.Json.JsonProperty("buildType", Required = Newtonsoft.Json.Required.Always)]
 		[System.ComponentModel.DataAnnotations.Required]
 		[Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
@@ -914,6 +700,10 @@ namespace Janitra.Bot.Api
 		[Newtonsoft.Json.JsonProperty("gitHash", Required = Newtonsoft.Json.Required.Always)]
 		[System.ComponentModel.DataAnnotations.Required]
 		public string GitHash { get; set; }
+
+		[Newtonsoft.Json.JsonProperty("commitTime", Required = Newtonsoft.Json.Required.Always)]
+		[System.ComponentModel.DataAnnotations.Required]
+		public System.DateTimeOffset CommitTime { get; set; }
 
 		[Newtonsoft.Json.JsonProperty("buildType", Required = Newtonsoft.Json.Required.Always)]
 		[System.ComponentModel.DataAnnotations.Required]
@@ -1030,27 +820,6 @@ namespace Janitra.Bot.Api
 	}
 
 	[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "9.4.10.0")]
-	public partial class VerifyAuthResult
-	{
-		[Newtonsoft.Json.JsonProperty("userId", Required = Newtonsoft.Json.Required.Always)]
-		public int UserId { get; set; }
-
-		[Newtonsoft.Json.JsonProperty("name", Required = Newtonsoft.Json.Required.Always)]
-		[System.ComponentModel.DataAnnotations.Required]
-		public string Name { get; set; }
-
-		public string ToJson()
-		{
-			return Newtonsoft.Json.JsonConvert.SerializeObject(this);
-		}
-
-		public static VerifyAuthResult FromJson(string data)
-		{
-			return Newtonsoft.Json.JsonConvert.DeserializeObject<VerifyAuthResult>(data);
-		}
-	}
-
-	[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "9.4.10.0")]
 	public partial class JsonTestDefinition
 	{
 		[Newtonsoft.Json.JsonProperty("testDefinitionId", Required = Newtonsoft.Json.Required.Always)]
@@ -1059,6 +828,10 @@ namespace Janitra.Bot.Api
 		[Newtonsoft.Json.JsonProperty("testName", Required = Newtonsoft.Json.Required.Always)]
 		[System.ComponentModel.DataAnnotations.Required]
 		public string TestName { get; set; }
+
+		[Newtonsoft.Json.JsonProperty("notes", Required = Newtonsoft.Json.Required.Always)]
+		[System.ComponentModel.DataAnnotations.Required]
+		public string Notes { get; set; }
 
 		/// <summary>Url the movie can be downloaded from</summary>
 		[Newtonsoft.Json.JsonProperty("movieUrl", Required = Newtonsoft.Json.Required.Always)]
@@ -1104,22 +877,16 @@ namespace Janitra.Bot.Api
 		[Newtonsoft.Json.JsonProperty("testRomId", Required = Newtonsoft.Json.Required.Always)]
 		public int TestRomId { get; set; }
 
-		[Newtonsoft.Json.JsonProperty("romType", Required = Newtonsoft.Json.Required.Always)]
+		[Newtonsoft.Json.JsonProperty("romUrl", Required = Newtonsoft.Json.Required.Always)]
 		[System.ComponentModel.DataAnnotations.Required]
-		[Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-		public JsonTestRomRomType RomType { get; set; }
-
-		[Newtonsoft.Json.JsonProperty("fileName", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
-		public string FileName { get; set; }
-
-		[Newtonsoft.Json.JsonProperty("romUrl", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
 		public string RomUrl { get; set; }
 
 		[Newtonsoft.Json.JsonProperty("romSha256", Required = Newtonsoft.Json.Required.Always)]
 		[System.ComponentModel.DataAnnotations.Required]
 		public string RomSha256 { get; set; }
 
-		[Newtonsoft.Json.JsonProperty("codeUrl", Required = Newtonsoft.Json.Required.Default, NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+		[Newtonsoft.Json.JsonProperty("codeUrl", Required = Newtonsoft.Json.Required.Always)]
+		[System.ComponentModel.DataAnnotations.Required]
 		public string CodeUrl { get; set; }
 
 		[Newtonsoft.Json.JsonProperty("addedByUserId", Required = Newtonsoft.Json.Required.Always)]
@@ -1141,23 +908,6 @@ namespace Janitra.Bot.Api
 	}
 
 	[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "9.4.10.0")]
-	public partial class AddTestResult
-	{
-		[Newtonsoft.Json.JsonProperty("testDefinitionId", Required = Newtonsoft.Json.Required.Always)]
-		public int TestDefinitionId { get; set; }
-
-		public string ToJson()
-		{
-			return Newtonsoft.Json.JsonConvert.SerializeObject(this);
-		}
-
-		public static AddTestResult FromJson(string data)
-		{
-			return Newtonsoft.Json.JsonConvert.DeserializeObject<AddTestResult>(data);
-		}
-	}
-
-	[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "9.4.10.0")]
 	public partial class JsonTestResult
 	{
 		[Newtonsoft.Json.JsonProperty("testResultId", Required = Newtonsoft.Json.Required.Always)]
@@ -1165,6 +915,9 @@ namespace Janitra.Bot.Api
 
 		[Newtonsoft.Json.JsonProperty("citraBuildId", Required = Newtonsoft.Json.Required.Always)]
 		public int CitraBuildId { get; set; }
+
+		[Newtonsoft.Json.JsonProperty("janitraBotId", Required = Newtonsoft.Json.Required.Always)]
+		public int JanitraBotId { get; set; }
 
 		[Newtonsoft.Json.JsonProperty("testDefinitionId", Required = Newtonsoft.Json.Required.Always)]
 		public int TestDefinitionId { get; set; }
@@ -1185,10 +938,15 @@ namespace Janitra.Bot.Api
 		[System.ComponentModel.DataAnnotations.Required]
 		public string ScreenshotBottomUrl { get; set; }
 
-		[Newtonsoft.Json.JsonProperty("testResultType", Required = Newtonsoft.Json.Required.Always)]
+		[Newtonsoft.Json.JsonProperty("executionResult", Required = Newtonsoft.Json.Required.Always)]
 		[System.ComponentModel.DataAnnotations.Required]
 		[Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-		public JsonTestResultTestResultType TestResultType { get; set; }
+		public JsonTestResultExecutionResult ExecutionResult { get; set; }
+
+		[Newtonsoft.Json.JsonProperty("accuracyStatus", Required = Newtonsoft.Json.Required.Always)]
+		[System.ComponentModel.DataAnnotations.Required]
+		[Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+		public JsonTestResultAccuracyStatus AccuracyStatus { get; set; }
 
 		[Newtonsoft.Json.JsonProperty("timeTakenSeconds", Required = Newtonsoft.Json.Required.Always)]
 		public double TimeTakenSeconds { get; set; }
@@ -1233,10 +991,10 @@ namespace Janitra.Bot.Api
 		[System.ComponentModel.DataAnnotations.Required]
 		public byte[] ScreenshotBottom { get; set; }
 
-		[Newtonsoft.Json.JsonProperty("testResultType", Required = Newtonsoft.Json.Required.Always)]
+		[Newtonsoft.Json.JsonProperty("executionResult", Required = Newtonsoft.Json.Required.Always)]
 		[System.ComponentModel.DataAnnotations.Required]
 		[Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-		public NewTestResultTestResultType TestResultType { get; set; }
+		public NewTestResultExecutionResult ExecutionResult { get; set; }
 
 		[Newtonsoft.Json.JsonProperty("timeTakenSeconds", Required = Newtonsoft.Json.Required.Always)]
 		public double TimeTakenSeconds { get; set; }
@@ -1250,17 +1008,6 @@ namespace Janitra.Bot.Api
 		{
 			return Newtonsoft.Json.JsonConvert.DeserializeObject<NewTestResult>(data);
 		}
-	}
-
-	[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "9.4.10.0")]
-	public enum RomType
-	{
-		[System.Runtime.Serialization.EnumMember(Value = "HardwareTest")]
-		HardwareTest = 0,
-
-		[System.Runtime.Serialization.EnumMember(Value = "HomebrewApp")]
-		HomebrewApp = 1,
-
 	}
 
 	[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "9.4.10.0")]
@@ -1320,18 +1067,7 @@ namespace Janitra.Bot.Api
 	}
 
 	[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "9.4.10.0")]
-	public enum JsonTestRomRomType
-	{
-		[System.Runtime.Serialization.EnumMember(Value = "HardwareTest")]
-		HardwareTest = 0,
-
-		[System.Runtime.Serialization.EnumMember(Value = "HomebrewApp")]
-		HomebrewApp = 1,
-
-	}
-
-	[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "9.4.10.0")]
-	public enum JsonTestResultTestResultType
+	public enum JsonTestResultExecutionResult
 	{
 		[System.Runtime.Serialization.EnumMember(Value = "Crash")]
 		Crash = 0,
@@ -1345,7 +1081,21 @@ namespace Janitra.Bot.Api
 	}
 
 	[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "9.4.10.0")]
-	public enum NewTestResultTestResultType
+	public enum JsonTestResultAccuracyStatus
+	{
+		[System.Runtime.Serialization.EnumMember(Value = "Unset")]
+		Unset = 0,
+
+		[System.Runtime.Serialization.EnumMember(Value = "Correct")]
+		Correct = 1,
+
+		[System.Runtime.Serialization.EnumMember(Value = "Incorrect")]
+		Incorrect = 2,
+
+	}
+
+	[System.CodeDom.Compiler.GeneratedCode("NJsonSchema", "9.4.10.0")]
+	public enum NewTestResultExecutionResult
 	{
 		[System.Runtime.Serialization.EnumMember(Value = "Crash")]
 		Crash = 0,
