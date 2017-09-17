@@ -16,13 +16,15 @@ namespace Janitra.Bot
 {
 	class JanitraBotOptions
 	{
-		public string AccessKey { get; set; }
-		public int JanitraBotId { get; set; }
+		public string AccessKey { get; }
+		public int JanitraBotId { get; }
+		public string ProfileDir { get; }
 
-		public JanitraBotOptions(string accessKey, int janitraBotId)
+		public JanitraBotOptions(string accessKey, int janitraBotId, string profileDir)
 		{
 			AccessKey = accessKey;
 			JanitraBotId = janitraBotId;
+			ProfileDir = profileDir;
 		}
 	}
 
@@ -30,9 +32,7 @@ namespace Janitra.Bot
 	{
 		private readonly IClient _client;
 		private readonly ILogger _logger;
-
-		private readonly int _janitraBotId;
-		private readonly string _accessKey;
+		public readonly JanitraBotOptions Options;
 
 		private const string BuildsPath = "Builds";
 		private const string MoviesPath = "Movies";
@@ -43,30 +43,55 @@ namespace Janitra.Bot
 
 		public JanitraBot(IClient client, ILogger logger, JanitraBotOptions options)
 		{
-			_janitraBotId = options.JanitraBotId;
-			_accessKey = options.AccessKey;
-
 			_client = client;
 			_logger = logger;
+			Options = options;
+		}
+
+		public void PlaceProfile()
+		{
+			_logger.Information("Placing profile from {location}", Options.ProfileDir);
+
+			//TODO: Windows only...
+			var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData); //This returns the path with roaming in
+			var destination = Path.Combine(appDataPath, "Citra");
+
+			if (Directory.Exists(destination))
+			{
+				_logger.Information("Removing existing Citra dir");
+				Directory.Delete(destination, true);
+			}
+
+			_logger.Information("Copying profile {location}", Options.ProfileDir);
+			var source = Path.Combine("Profiles", Options.ProfileDir);
+
+			//Create all of the directories
+			foreach (string dirPath in Directory.GetDirectories(source, "*", SearchOption.AllDirectories))
+				Directory.CreateDirectory(dirPath.Replace(source, destination));
+
+			//Copy all the files & Replaces any files with the same name
+			foreach (string newPath in Directory.GetFiles(source, "*.*", SearchOption.AllDirectories))
+				File.Copy(newPath, newPath.Replace(source, destination), true);
 		}
 
 		public void RunForever()
 		{
-			Task.Run(() =>
+			Task.Run(async () =>
 			{
+				PlaceProfile();
 				_logger.Information("Starting to Run Forever");
 				while (true)
 				{
 					try
 					{
-						RunOnce();
+						await RunOnce();
 					}
 					catch (Exception e)
 					{
 						Console.WriteLine(e);
 						throw;
 					}
-					Task.Delay(TimeSpan.FromMinutes(1));
+					await Task.Delay(TimeSpan.FromMinutes(1));
 				}
 			}).Wait();
 		}
@@ -94,7 +119,7 @@ namespace Janitra.Bot
 				if (UrlForOurOs(build) == null)
 					continue;
 
-				var testResults = await _client.ApiTestResultsListGetAsync(build.CitraBuildId, janitraBotId: _janitraBotId);
+				var testResults = await _client.ApiTestResultsListGetAsync(build.CitraBuildId, janitraBotId: Options.JanitraBotId);
 
 				//Check we have a result for every test definition, do those we don't
 				foreach (var testDefinition in testDefinitions)
@@ -175,8 +200,8 @@ namespace Janitra.Bot
 			_logger.Information("Submitting result");
 			await _client.ApiTestResultsAddPostAsync(new NewTestResult
 			{
-				JanitraBotId = _janitraBotId,
-				AccessKey = _accessKey,
+				JanitraBotId = Options.JanitraBotId,
+				AccessKey = Options.AccessKey,
 
 				CitraBuildId = build.CitraBuildId,
 				TestDefinitionId = testDefinition.TestDefinitionId,

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Janitra.Bot.Api;
 using Microsoft.Extensions.Configuration;
@@ -20,11 +21,19 @@ namespace Janitra.Bot
 				.ReadFrom.Configuration(configuration)
 				.CreateLogger();
 
-			var section = configuration.GetSection("JanitraBot");
-			var options = new JanitraBotOptions(section["AccessKey"], int.Parse(section["JanitraBotId"]));
+			var bots = new List<JanitraBot>();
+			foreach (var child in configuration.GetSection("JanitraBots").GetChildren())
+			{
+				var options = new JanitraBotOptions(child["AccessKey"], int.Parse(child["JanitraBotId"]), child["ProfileDir"]);
+				bots.Add(new JanitraBot(new Client(child["BaseUrl"]), logger, options));
+			}
 
-			//new JanitraBot(new Client(section["BaseUrl"]), logger, options).RunForever();
-			new JanitraBot(new Client(section["BaseUrl"]), logger, options).RunOnce().Wait();
+			foreach (var bot in bots)
+			{
+				Console.WriteLine("Running bot " + bot.Options.JanitraBotId);
+				bot.PlaceProfile();
+				bot.RunOnce().Wait();
+			}
 		}
 	}
 }
