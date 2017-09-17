@@ -6,11 +6,11 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using ImageSharp;
-using ImageSharp.Formats;
-using ImageSharp.Processing;
 using Janitra.Bot.Api;
 using Serilog;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Png;
+using SixLabors.ImageSharp.Processing;
 
 namespace Janitra.Bot
 {
@@ -197,12 +197,12 @@ namespace Janitra.Bot
 		{
 			using (var stream = File.OpenRead(path))
 			{
-				using (var image = ImageSharp.Image.Load(stream))
+				using (var image = Image.Load(stream))
 				{
 					using (var output = new MemoryStream())
 					{
-						image.Rotate(RotateType.Rotate270)
-							.Save(output, new PngEncoder { PngColorType = PngColorType.Rgb, CompressionLevel = 9 });
+						image.Mutate(i => i.Rotate(RotateType.Rotate270));
+						image.Save(output, new PngEncoder { PngColorType = PngColorType.Rgb, CompressionLevel = 9 });
 						return output.ToArray();
 					}
 				}
