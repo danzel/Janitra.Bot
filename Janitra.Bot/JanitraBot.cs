@@ -130,10 +130,10 @@ namespace Janitra.Bot
 				FileName = executable,
 				Arguments = $"--movie-play {movieFilename} --movie-test {testRomFilename}",
 
-				CreateNoWindow = true,
+				//CreateNoWindow = true,
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
-				WindowStyle = ProcessWindowStyle.Hidden,
+				//WindowStyle = ProcessWindowStyle.Hidden,
 
 				//TODO? WorkingDirectory = 
 			};
@@ -168,6 +168,7 @@ namespace Janitra.Bot
 
 			_logger.Information("Got {logLength} bytes of logs, {errorLength} bytes are from StandardError", log.Length, error.Length);
 
+			//TODO: If the app crashed or timed out there won't be any screenshot files
 			var screenshotTop = GetRotatedPngScreenshot("screenshot_0.bmp");
 			var screenshotBottom = GetRotatedPngScreenshot("screenshot_1.bmp");
 
