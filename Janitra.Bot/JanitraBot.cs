@@ -353,7 +353,8 @@ namespace Janitra.Bot
 				AccessKey = Options.AccessKey,
 				Log = Encoding.UTF8.GetBytes(result.Log),
 				ExecutionResult = Enum.Parse<NewRomMovieResultExecutionResult>(result.ExecutionResult.ToString()),
-				Screenshots = screenshots
+				Screenshots = screenshots,
+				TimeTakenSeconds = result.Elapsed.TotalSeconds
 			});
 		}
 

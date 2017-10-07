@@ -729,6 +729,9 @@ namespace Janitra.Bot.Api
 		[System.ComponentModel.DataAnnotations.Required]
 		public byte[] Log { get; set; }
 
+		[Newtonsoft.Json.JsonProperty("timeTakenSeconds", Required = Newtonsoft.Json.Required.Always)]
+		public double TimeTakenSeconds { get; set; }
+
 		[Newtonsoft.Json.JsonProperty("screenshots", Required = Newtonsoft.Json.Required.Always)]
 		[System.ComponentModel.DataAnnotations.Required]
 		public System.Collections.Generic.List<NewScreenshot> Screenshots { get; set; } = new System.Collections.Generic.List<NewScreenshot>();
