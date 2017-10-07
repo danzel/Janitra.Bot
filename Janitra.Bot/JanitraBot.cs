@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -33,19 +34,22 @@ namespace Janitra.Bot
 		private readonly IClient _client;
 		private readonly ILogger _logger;
 		public readonly JanitraBotOptions Options;
+		private readonly List<Rom> _roms;
 
 		private const string BuildsPath = "Builds";
 		private const string MoviesPath = "Movies";
 		private const string TestRomsPath = "TestRoms";
+		private const string TempPath = "TempOutput";
 
 		//TODO: Platform specific
 		private const string CitraExecutable = "citra.exe";
 
-		public JanitraBot(IClient client, ILogger logger, JanitraBotOptions options)
+		public JanitraBot(IClient client, ILogger logger, JanitraBotOptions options, List<Rom> roms)
 		{
 			_client = client;
 			_logger = logger;
 			Options = options;
+			_roms = roms;
 		}
 
 		public void PlaceProfile()
@@ -78,7 +82,6 @@ namespace Janitra.Bot
 		{
 			Task.Run(async () =>
 			{
-				PlaceProfile();
 				_logger.Information("Starting to Run Forever");
 				while (true)
 				{
@@ -88,7 +91,7 @@ namespace Janitra.Bot
 					}
 					catch (Exception e)
 					{
-						Console.WriteLine(e);
+						_logger.Fatal(e, "Error in RunOnce");
 						throw;
 					}
 					await Task.Delay(TimeSpan.FromMinutes(1));
@@ -98,7 +101,7 @@ namespace Janitra.Bot
 
 		public async Task RunOnce()
 		{
-			foreach (var dir in new [] { BuildsPath, MoviesPath, TestRomsPath})
+			foreach (var dir in new[] { BuildsPath, MoviesPath, TestRomsPath, TempPath })
 			{
 				if (!Directory.Exists(dir))
 					Directory.CreateDirectory(dir);
@@ -108,9 +111,59 @@ namespace Janitra.Bot
 
 			//Get what builds and tests should be ran
 			var builds = await _client.ApiCitraBuildsListGetAsync();
+
+			//await FetchAndRunTests(builds);
+			await RunRomMovies(builds);
+		}
+
+		private async Task RunRomMovies(List<JsonCitraBuild> builds)
+		{
+			var roms = await _client.ApiRomsListGetAsync();
+			var currentResults = await _client.ApiRomMovieResultsListGetAsync(Options.JanitraBotId);
+
+			_logger.Information("Found {buildsCount} active builds, {romsCount} testable roms", builds.Count, roms.Count);
+
+			foreach (var rom in roms)
+			{
+				var matching = _roms.Where(r => r.FileName.ToLowerInvariant() == rom.RomFileName.ToLowerInvariant()).ToArray();
+				if (matching.Length > 0)
+				{
+					var romToUse = matching.FirstOrDefault(r => r.Sha256Hash == rom.RomSha256) ?? matching.First();
+
+					if (romToUse.Sha256Hash != rom.RomSha256)
+						_logger.Warning("Will run rom {rom} but hashes dont match", rom.Name);
+
+					var movies = await _client.ApiRomMoviesListByRomIdGetAsync(rom.RomId);
+					foreach (var movie in movies)
+					{
+						foreach (var build in builds)
+						{
+							if (!currentResults.Any(r => r.CitraBuildId == build.CitraBuildId && r.RomMovieId == movie.RomMovieId))
+							{
+								await GetBuildIfRequired(build);
+								await GetMovieIfRequired(movie.MovieUrl, movie.MovieSha256);
+
+								await RunRomMovie(build, rom, romToUse, movie);
+							}
+						}
+					}
+				}
+				else
+				{
+					_logger.Debug("Not running {rom}, we don't have it", rom.Name);
+				}
+			}
+		}
+
+		private async Task FetchAndRunTests(List<JsonCitraBuild> builds)
+		{
 			var testDefinitions = await _client.ApiTestDefinitionsListGetAsync();
 
 			_logger.Information("Found {buildsCount} active builds, {testsCount} active tests", builds.Count, testDefinitions.Count);
+
+			_logger.Information("Loading our existing results");
+			var testResults = await _client.ApiTestResultsListGetAsync(Options.JanitraBotId);
+			_logger.Information("We have {resultCount} results already", testResults.Count);
 
 			//TODO: Eventually tidy up old not used any more builds
 			foreach (var build in builds)
@@ -119,16 +172,13 @@ namespace Janitra.Bot
 				if (UrlForOurOs(build) == null)
 					continue;
 
-				var testResults = await _client.ApiTestResultsListGetAsync(build.CitraBuildId, janitraBotId: Options.JanitraBotId);
-
 				//Check we have a result for every test definition, do those we don't
 				foreach (var testDefinition in testDefinitions)
 				{
-					if (testResults.All(tr => tr.TestDefinitionId != testDefinition.TestDefinitionId))
+					if (!testResults.Any(tr => tr.CitraBuildId == build.CitraBuildId && tr.TestDefinitionId == testDefinition.TestDefinitionId))
 					{
 						await GetBuildIfRequired(build);
 						await GetTestDefinitionIfRequired(testDefinition);
-
 
 						await RunTest(build, testDefinition);
 					}
@@ -139,63 +189,15 @@ namespace Janitra.Bot
 		public async Task RunTest(JsonCitraBuild build, JsonTestDefinition testDefinition)
 		{
 			_logger.Information("Preparing to Run Test {testDefinitionId} for Build {citraBuildId}", testDefinition.TestDefinitionId, build.CitraBuildId);
-			if (File.Exists("screenshot_0.bmp"))
-				File.Delete("screenshot_0.bmp");
-			if (File.Exists("screenshot_1.bmp"))
-				File.Delete("screenshot_1.bmp");
 
-			var executable = GetBuildExecutablePath(build);
+			var movieFilename = Path.GetFullPath(Path.Combine(MoviesPath, testDefinition.MovieSha256));
+			var testRomFilename = Path.GetFullPath(Path.Combine(TestRomsPath, testDefinition.TestRom.RomSha256));
 
-			var movieFilename = Path.Combine(MoviesPath, testDefinition.MovieSha256);
-			var testRomFilename = Path.Combine(TestRomsPath, testDefinition.TestRom.RomSha256);
-
-
-			var startInfo = new ProcessStartInfo
-			{
-				FileName = executable,
-				Arguments = $"--movie-play {movieFilename} --movie-test {testRomFilename}",
-
-				//CreateNoWindow = true,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-				//WindowStyle = ProcessWindowStyle.Hidden,
-
-				//TODO? WorkingDirectory = 
-			};
-
-			var result = NewTestResultExecutionResult.Completed;
-
-			_logger.Information("Starting test");
-			var stopwatch = Stopwatch.StartNew();
-			var process = Process.Start(startInfo);
-
-			if (!process.WaitForExit(5 * 60 * 1000))
-			{
-				process.Kill();
-				result = NewTestResultExecutionResult.Timeout;
-			}
-			stopwatch.Stop();
-
-			if (process.ExitCode != 0)
-			{
-				result = NewTestResultExecutionResult.Crash;
-			}
-
-			_logger.Information("Test finished, result {result}", result);
-
-			var log = await process.StandardOutput.ReadToEndAsync();
-
-			var error = await process.StandardError.ReadToEndAsync();
-			if (error.Length > 0)
-			{
-				log += "\n\nError:\n" + error;
-			}
-
-			_logger.Information("Got {logLength} bytes of logs, {errorLength} bytes are from StandardError", log.Length, error.Length);
+			var runResult = await RunCitra(build, movieFilename, testRomFilename, "--movie-test");
 
 			//TODO: If the app crashed or timed out there won't be any screenshot files
-			var screenshotTop = GetRotatedPngScreenshot("screenshot_0.bmp");
-			var screenshotBottom = GetRotatedPngScreenshot("screenshot_1.bmp");
+			var screenshotTop = GetRotatedPngScreenshot(Path.Combine(TempPath, "screenshot_top.bmp"));
+			var screenshotBottom = GetRotatedPngScreenshot(Path.Combine(TempPath, "screenshot_bottom.bmp"));
 
 			_logger.Information("Submitting result");
 			await _client.ApiTestResultsAddPostAsync(new NewTestResult
@@ -205,14 +207,113 @@ namespace Janitra.Bot
 
 				CitraBuildId = build.CitraBuildId,
 				TestDefinitionId = testDefinition.TestDefinitionId,
-				Log = Encoding.UTF8.GetBytes(log),
-				ExecutionResult = result,
-				TimeTakenSeconds = stopwatch.Elapsed.TotalSeconds,
+				Log = Encoding.UTF8.GetBytes(runResult.Log),
+				ExecutionResult = runResult.ExecutionResult,
+				TimeTakenSeconds = runResult.Elapsed.TotalSeconds,
 
 				ScreenshotTop = screenshotTop,
 				ScreenshotBottom = screenshotBottom
 			});
 			_logger.Information("Done!");
+		}
+
+		private async Task<RunResult> RunCitra(JsonCitraBuild build, string movieFilename, string testRomFilename, string mode)
+		{
+			PlaceProfile();
+
+			foreach (var file in Directory.EnumerateFiles(TempPath))
+				File.Delete(file);
+
+			var executable = GetBuildExecutablePath(build);
+
+			var process = new Process();
+			process.StartInfo.FileName = executable;
+			process.StartInfo.Arguments = $"--movie-play \"{movieFilename}\" {mode} \"{testRomFilename}\"";
+			process.StartInfo.UseShellExecute = false;
+			process.StartInfo.RedirectStandardOutput = true;
+			process.StartInfo.RedirectStandardError = true;
+			process.StartInfo.WorkingDirectory = Path.GetFullPath(TempPath);
+
+			var log = new StringBuilder();
+
+			process.ErrorDataReceived += delegate (object sender, DataReceivedEventArgs eventArgs)
+			{
+				lock (log)
+					log.AppendLine(eventArgs.Data);
+			};
+			process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs eventArgs) {
+				lock (log)
+					log.AppendLine(eventArgs.Data);
+			};
+
+			var result = NewTestResultExecutionResult.Completed;
+
+			_logger.Information("Starting test");
+			var stopwatch = Stopwatch.StartNew();
+			process.Start();
+			process.BeginErrorReadLine();
+			process.BeginOutputReadLine();
+
+			if (!process.WaitForExit(5 * 60 * 1000))
+			//if (!process.WaitForExit(10 * 1000))
+			{
+				process.Kill();
+				result = NewTestResultExecutionResult.Timeout;
+			}
+			stopwatch.Stop();
+
+			if (process.ExitCode != 0 && result != NewTestResultExecutionResult.Timeout)
+			{
+				result = NewTestResultExecutionResult.Crash;
+			}
+
+			_logger.Information("Test finished, result {result}", result);
+
+			_logger.Information("Got {logLength} bytes of logs", log.Length);
+
+
+			var runResult = new RunResult
+			{
+				Elapsed = stopwatch.Elapsed,
+				ExecutionResult = result,
+				Log = log.ToString()
+			};
+			return runResult;
+		}
+
+		private async Task RunRomMovie(JsonCitraBuild build, JsonRom rom, Rom romToUse, JsonRomMovie movie)
+		{
+			_logger.Information("Preparing to Run Rom {romName} with Movie {movie} for Build {citraBuildId}", rom.Name, movie.Name, build.CitraBuildId);
+
+			var movieFilename = Path.GetFullPath(Path.Combine(MoviesPath, movie.MovieSha256));
+
+			var result = await RunCitra(build, movieFilename, romToUse.FullPath, "--movie-test-continuous");
+
+			_logger.Information("Finished running {romName}, result: {executionResult}", rom.Name, result.ExecutionResult);
+
+			var screenshots = new List<NewScreenshot>();
+
+			foreach (var file in Directory.EnumerateFiles(TempPath, "*_top.bmp"))
+			{
+				//screenshot_%i_top.bmp (and bottom)
+				screenshots.Add(new NewScreenshot
+				{
+					FrameNumber = int.Parse(Path.GetFileName(file).Replace("screenshot_", "").Replace("_top.bmp", "")),
+					TopImage = GetRotatedPngScreenshot(file),
+					BottomImage = GetRotatedPngScreenshot(file.Replace("_top.bmp", "_bottom.bmp"))
+				});
+			}
+				
+			await _client.ApiRomMovieResultsAddPostAsync(new NewRomMovieResult
+			{
+				CitraBuildId = build.CitraBuildId,
+				JanitraBotId = Options.JanitraBotId,
+				RomMovieId = movie.RomMovieId,
+				AccessKey = Options.AccessKey,
+				Log = Encoding.UTF8.GetBytes(result.Log),
+				ExecutionResult = Enum.Parse<NewRomMovieResultExecutionResult>(result.ExecutionResult.ToString()),
+				Screenshots = screenshots
+			});
 		}
 
 		/// <summary>
@@ -269,28 +370,8 @@ namespace Janitra.Bot
 
 		private async Task GetTestDefinitionIfRequired(JsonTestDefinition testDefinition)
 		{
-			//TODO: Test the movie Sha256 matches
-			var movieFilename = Path.Combine(MoviesPath, testDefinition.MovieSha256);
-			if (!File.Exists(movieFilename))
-			{
-				_logger.Information("Need to download movie for test {testDefinitionId}", testDefinition.TestDefinitionId);
-				var client = new HttpClient();
-				var result = await client.GetAsync(testDefinition.MovieUrl);
+			await GetMovieIfRequired(testDefinition.MovieUrl, testDefinition.MovieSha256);
 
-				if (result.IsSuccessStatusCode)
-				{
-					_logger.Information("Download Completed, Saving");
-					using (var file = File.OpenWrite(movieFilename))
-						await result.Content.CopyToAsync(file);
-				}
-				else
-				{
-					_logger.Error("Download Failed {statusCode} {reason}", result.StatusCode, result.ReasonPhrase);
-					throw new Exception("Failed to download testDefinition.Movie " + testDefinition.TestDefinitionId);
-				}
-			}
-
-			//TODO: Support other types of test rom
 			//TODO: Sha256 check
 			var testRomFilename = Path.Combine(TestRomsPath, testDefinition.TestRom.RomSha256);
 			if (!File.Exists(testRomFilename))
@@ -309,6 +390,30 @@ namespace Janitra.Bot
 				{
 					_logger.Error("Download Failed {statusCode} {reason}", result.StatusCode, result.ReasonPhrase);
 					throw new Exception("Failed to download testDefinition.TestRom " + testDefinition.TestDefinitionId);
+				}
+			}
+		}
+
+		private async Task GetMovieIfRequired(string url, string sha256)
+		{
+			//TODO: Test the movie Sha256 matches
+			var movieFilename = Path.Combine(MoviesPath, sha256);
+			if (!File.Exists(movieFilename))
+			{
+				_logger.Information("Need to download movie {movieHash}", sha256);
+				var client = new HttpClient();
+				var result = await client.GetAsync(url);
+
+				if (result.IsSuccessStatusCode)
+				{
+					_logger.Information("Download Completed, Saving");
+					using (var file = File.OpenWrite(movieFilename))
+						await result.Content.CopyToAsync(file);
+				}
+				else
+				{
+					_logger.Error("Download Failed {statusCode} {reason}", result.StatusCode, result.ReasonPhrase);
+					throw new Exception("Failed to download Movie " + url);
 				}
 			}
 		}
@@ -332,6 +437,13 @@ namespace Janitra.Bot
 				default:
 					throw new Exception("Don't know what platform matches " + Environment.OSVersion.Platform);
 			}
+		}
+
+		class RunResult
+		{
+			public NewTestResultExecutionResult ExecutionResult { get; set; }
+			public TimeSpan Elapsed { get; set; }
+			public string Log { get; set; }
 		}
 	}
 }

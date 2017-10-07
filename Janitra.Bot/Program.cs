@@ -21,11 +21,14 @@ namespace Janitra.Bot
 				.ReadFrom.Configuration(configuration)
 				.CreateLogger();
 
+			var roms = configuration["RomsDirectory"] != null ? Rom.ScanDirectory(logger, configuration["RomsDirectory"]) : null;
+
 			var bots = new List<JanitraBot>();
 			foreach (var child in configuration.GetSection("JanitraBots").GetChildren())
 			{
 				var options = new JanitraBotOptions(child["AccessKey"], int.Parse(child["JanitraBotId"]), child["ProfileDir"]);
-				bots.Add(new JanitraBot(new Client(child["BaseUrl"]), logger, options));
+
+				bots.Add(new JanitraBot(new Client(child["BaseUrl"]), logger, options, roms));
 			}
 
 			foreach (var bot in bots)
