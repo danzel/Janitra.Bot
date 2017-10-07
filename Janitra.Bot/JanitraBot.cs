@@ -29,6 +29,11 @@ namespace Janitra.Bot
 		}
 	}
 
+	class CitraSettings
+	{
+		public int RegionValue { get; set; }
+	}
+
 	class JanitraBot
 	{
 		private readonly IClient _client;
@@ -52,7 +57,7 @@ namespace Janitra.Bot
 			_roms = roms;
 		}
 
-		public void PlaceProfile()
+		private void PlaceProfile()
 		{
 			_logger.Information("Placing profile from {location}", Options.ProfileDir);
 
@@ -76,6 +81,32 @@ namespace Janitra.Bot
 			//Copy all the files & Replaces any files with the same name
 			foreach (string newPath in Directory.GetFiles(source, "*.*", SearchOption.AllDirectories))
 				File.Copy(newPath, newPath.Replace(source, destination), true);
+		}
+
+		private void SetProfileRegion(int region)
+		{
+			_logger.Information("Setting region to {region}", region);
+
+			//TODO: Windows only...
+			var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData); //This returns the path with roaming in
+			var destination = Path.Combine(appDataPath, "Citra");
+
+			var filename = Path.Combine(destination, "config", "sdl2-config.ini");
+
+			bool found = false;
+			var lines = File.ReadAllLines(filename);
+			for (var i = 0; i < lines.Length; i++)
+			{
+				if (lines[i].StartsWith("region_value ="))
+				{
+					lines[i] = "region_value = " + region;
+					found = true;
+				}
+			}
+
+			if (!found)
+				throw new Exception("Couldn't find region_value in citra config to replace");
+			File.WriteAllLines(filename, lines);
 		}
 
 		public void RunForever()
@@ -193,7 +224,7 @@ namespace Janitra.Bot
 			var movieFilename = Path.GetFullPath(Path.Combine(MoviesPath, testDefinition.MovieSha256));
 			var testRomFilename = Path.GetFullPath(Path.Combine(TestRomsPath, testDefinition.TestRom.RomSha256));
 
-			var runResult = await RunCitra(build, movieFilename, testRomFilename, "--movie-test");
+			var runResult = await RunCitra(build, movieFilename, testRomFilename, "--movie-test", null);
 
 			//TODO: If the app crashed or timed out there won't be any screenshot files
 			var screenshotTop = GetRotatedPngScreenshot(Path.Combine(TempPath, "screenshot_top.bmp"));
@@ -217,9 +248,14 @@ namespace Janitra.Bot
 			_logger.Information("Done!");
 		}
 
-		private async Task<RunResult> RunCitra(JsonCitraBuild build, string movieFilename, string testRomFilename, string mode)
+		private async Task<RunResult> RunCitra(JsonCitraBuild build, string movieFilename, string testRomFilename, string mode, CitraSettings citraSettings)
 		{
 			PlaceProfile();
+
+			if (citraSettings != null)
+			{
+				SetProfileRegion(citraSettings.RegionValue);
+			}
 
 			foreach (var file in Directory.EnumerateFiles(TempPath))
 				File.Delete(file);
@@ -287,7 +323,12 @@ namespace Janitra.Bot
 
 			var movieFilename = Path.GetFullPath(Path.Combine(MoviesPath, movie.MovieSha256));
 
-			var result = await RunCitra(build, movieFilename, romToUse.FullPath, "--movie-test-continuous");
+			var settings = new CitraSettings
+			{
+				RegionValue = movie.CitraRegionValue
+			};
+
+			var result = await RunCitra(build, movieFilename, romToUse.FullPath, "--movie-test-continuous", settings);
 
 			_logger.Information("Finished running {romName}, result: {executionResult}", rom.Name, result.ExecutionResult);
 

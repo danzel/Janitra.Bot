@@ -34,7 +34,6 @@ namespace Janitra.Bot
 			foreach (var bot in bots)
 			{
 				Console.WriteLine("Running bot " + bot.Options.JanitraBotId);
-				bot.PlaceProfile();
 				bot.RunOnce().Wait();
 			}
 		}
